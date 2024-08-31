@@ -27,7 +27,6 @@
         <module>application</module>
         <module>repository</module>
         <module>infra</module>
-        <module>builder</module>
         <module>controller</module>
 
     </modules>
