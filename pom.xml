@@ -11,6 +11,7 @@
     <groupId>com.micro</groupId>
     <artifactId>OrderService</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>OrderService</name>
     <description>OrderService</description>
     <url/>
@@ -20,6 +21,16 @@
     <developers>
         <developer/>
     </developers>
+    <modules>
+        <module>commons</module>
+        <module>domain</module>
+        <module>application</module>
+        <module>repository</module>
+        <module>infra</module>
+        <module>builder</module>
+        <module>controller</module>
+
+    </modules>
     <scm>
         <connection/>
         <developerConnection/>
@@ -75,6 +86,12 @@
             <artifactId>jackson-core</artifactId>
             <version>2.17.2</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-jar-plugin -->
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.4.2</version>
+        </dependency>
 
     </dependencies>
 
@@ -83,6 +100,33 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>exec</classifier>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <classifier>exec</classifier>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <!-- Build an executable JAR -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.micro.orderService.builder.OrderServiceApplication</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>

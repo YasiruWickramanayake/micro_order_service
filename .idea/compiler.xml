@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="controller" />
+        <module name="applicationDomain" />
+        <module name="applicationInputPlugin" />
+        <module name="coreDomain" />
+        <module name="builder" />
+        <module name="applicationCommon" />
+        <module name="applicationOutputPlugin" />
+        <module name="infra" />
+        <module name="repository" />
+        <module name="commons" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="applicationImputPlugin" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="OrderService" options="" />
+      <module name="application" options="" />
+      <module name="applicationCommon" options="-parameters" />
+      <module name="applicationDomain" options="-parameters" />
+      <module name="applicationImputPlugin" options="-parameters" />
+      <module name="applicationInputPlugin" options="-parameters" />
+      <module name="applicationOutputPlugin" options="-parameters" />
+      <module name="builder" options="-parameters" />
+      <module name="commons" options="-parameters" />
+      <module name="controller" options="-parameters" />
+      <module name="coreDomain" options="-parameters" />
+      <module name="domain" options="" />
+      <module name="infra" options="-parameters" />
+      <module name="repository" options="-parameters" />
+    </option>
+  </component>
+</project>
