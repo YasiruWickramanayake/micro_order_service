@@ -6,52 +6,92 @@ import com.micro.orderService.applicationInputPlugin.primary.OrderService;
 import com.micro.orderService.commons.dto.infra.externalConnector.input.ProductReleaseSuccessMessage;
 import com.micro.orderService.commons.dto.infra.externalConnector.input.ProductReservationFailMessage;
 import com.micro.orderService.commons.dto.infra.externalConnector.input.ProductReservationSuccessMessage;
-import com.micro.orderService.infra.externalConnector.subscriber.InventorySubscriberConnector;
+import com.micro.productService.*;
+import io.grpc.stub.StreamObserver;
+import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
 
-@Component
-public class InventorySubscriberConnectorImpl implements InventorySubscriberConnector {
+
+@GrpcService
+public class InventorySubscriberConnectorImpl extends ProductServiceGrpc.ProductServiceImplBase {
 
     @Autowired
     private OrderService orderService;
 
-    @KafkaListener(topics = "item-reservation-success")
-    public void itemReservationSuccessMessage(ConsumerRecord<String, String> record) {
-        System.out.println("Received message: " + record.value());
-        ObjectMapper ob = new ObjectMapper();
-        try {
-            ProductReservationSuccessMessage productReservationSuccessMessage = ob.readValue(record.value(), ProductReservationSuccessMessage.class);
-            orderService.orderUpdateBasedOnProductReservationSuccess(productReservationSuccessMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+    @Override
+    public void productReserveSuccess(ProductReserveSuccessRequest request, StreamObserver<ProductReserveSuccessResponse> responseObserver) {
+        try{
+        ProductReservationSuccessMessage productReservationSuccessMessage =ProductReservationSuccessMessage.builder().sagaId(request.getSagaId()).build();
+        orderService.orderUpdateBasedOnProductReservationSuccess(productReservationSuccessMessage);
+        responseObserver.onNext(ProductReserveSuccessResponse.newBuilder()
+                .setStatus(true)
+                .setMessage("reserved successfully")
+                .build());
+        responseObserver.onCompleted();
+        }catch (RuntimeException ex){
+            responseObserver.onNext(ProductReserveSuccessResponse.newBuilder()
+                    .setStatus(false)
+                    .setMessage("reservation failed")
+                    .build());
+            responseObserver.onCompleted();
         }
     }
 
-    @KafkaListener(topics = "item-reservation-fail")
-    public void itemReservationFailMessage(ConsumerRecord<String, String> record) {
-        System.out.println("Received message: " + record.value());
-        ObjectMapper ob = new ObjectMapper();
+    @Override
+    public void productReserveFail(ProductReserveFailRequest request, StreamObserver<ProductReserveFailResponse> responseObserver) {
+        System.out.println("Received reservation fail message: " + request);
         try {
-            ProductReservationFailMessage productReservationFailMessage = ob.readValue(record.value(), ProductReservationFailMessage.class);
+            ProductReservationFailMessage productReservationFailMessage = ProductReservationFailMessage.builder()
+                    .sagaId(request.getSagaId())
+                    .build();
             orderService.orderUpdateBasedOnProductReservationFail(productReservationFailMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            responseObserver.onNext(ProductReserveFailResponse.newBuilder()
+                    .setStatus(true)
+                    .setMessage("message received successfully")
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onNext(ProductReserveFailResponse.newBuilder()
+                    .setStatus(false)
+                    .setMessage("message received failed")
+                    .build());
+            responseObserver.onCompleted();
         }
     }
 
-    @KafkaListener(topics = "item-release-success")
-    public void itemReleaseSuccessMessage(ConsumerRecord<String, String> record) {
-        System.out.println("Received message: " + record.value());
-        ObjectMapper ob = new ObjectMapper();
-        try {
-            ProductReleaseSuccessMessage productReleaseSuccessMessage = ob.readValue(record.value(), ProductReleaseSuccessMessage.class);
+    @Override
+    public void productReleaseSuccess(ProductReleaseSuccessRequest request, StreamObserver<ProductReleaseSuccessResponse> responseObserver) {
+        try{
+            ProductReleaseSuccessMessage productReleaseSuccessMessage = ProductReleaseSuccessMessage.builder()
+                    .sagaId(request.getSagaId())
+                    .build();
             orderService.orderUpdateBasedOnProductReleaseSuccess(productReleaseSuccessMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            responseObserver.onNext(ProductReleaseSuccessResponse.newBuilder()
+                    .setStatus(true)
+                    .setMessage("message received successfully")
+                    .build());
+            responseObserver.onCompleted();
+        }catch(RuntimeException ex){
+            responseObserver.onNext(ProductReleaseSuccessResponse.newBuilder()
+                    .setStatus(false)
+                    .setMessage("message received failed")
+                    .build());
+            responseObserver.onCompleted();
         }
     }
+
+    //    @KafkaListener(topics = "item-release-success")
+//    public void itemReleaseSuccessMessage(ConsumerRecord<String, String> record) {
+//        System.out.println("Received message: " + record.value());
+//        ObjectMapper ob = new ObjectMapper();
+//        try {
+//            ProductReleaseSuccessMessage productReleaseSuccessMessage = ob.readValue(record.value(), ProductReleaseSuccessMessage.class);
+//            orderService.orderUpdateBasedOnProductReleaseSuccess(productReleaseSuccessMessage);
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
 }

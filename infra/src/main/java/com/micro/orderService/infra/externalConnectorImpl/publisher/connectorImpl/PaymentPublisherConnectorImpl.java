@@ -1,9 +1,11 @@
 package com.micro.orderService.infra.externalConnectorImpl.publisher.connectorImpl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.micro.orderService.commons.dto.infra.externalConnector.output.PaymentInitiationMessage;
+
 import com.micro.orderService.infra.externalConnector.publisher.PaymentPublisherConnector;
+import com.micro.paymentService.PaymentInitiateRequest;
+import com.micro.paymentService.PaymentInitiateResponse;
+import com.micro.paymentService.PaymentServiceGrpc;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -12,16 +14,20 @@ import org.springframework.stereotype.Component;
 class PaymentPublisherConnectorImpl implements PaymentPublisherConnector {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
-    @Override
-    public void initiatePayment(PaymentInitiationMessage paymentInitiationMessage) {
-        try{
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonMessage = objectMapper.writeValueAsString(paymentInitiationMessage);
-            kafkaTemplate.send("init-payment", jsonMessage);
-        }catch (RuntimeException ex){
 
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+    @GrpcClient("payment-initiate-service")
+    PaymentServiceGrpc.PaymentServiceBlockingStub paymentServiceBlockingStub;
+    @Override
+    public void initiatePayment(PaymentInitiateRequest paymentInitiateRequest) {
+        try{
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            String jsonMessage = objectMapper.writeValueAsString(paymentInitiationMessage);
+//            kafkaTemplate.send("init-payment", jsonMessage);
+
+            PaymentInitiateResponse paymentInitiateResponse =
+                    paymentServiceBlockingStub.paymentInitiate(paymentInitiateRequest);
+        }catch (RuntimeException ex){
+            throw new RuntimeException(ex);
         }
     }
 }

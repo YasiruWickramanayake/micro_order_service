@@ -6,38 +6,61 @@ import com.micro.orderService.applicationInputPlugin.primary.OrderService;
 import com.micro.orderService.commons.dto.infra.externalConnector.input.PaymentFailMessage;
 import com.micro.orderService.commons.dto.infra.externalConnector.input.PaymentSuccessMessage;
 import com.micro.orderService.infra.externalConnector.subscriber.PaymentSubscriberConnector;
+import com.micro.paymentService.*;
+import io.grpc.stub.StreamObserver;
+import net.devh.boot.grpc.server.service.GrpcService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
 
-@Component
-public class PaymentSubscriberConnectorImpl implements PaymentSubscriberConnector {
+
+@GrpcService
+public class PaymentSubscriberConnectorImpl extends PaymentServiceGrpc.PaymentServiceImplBase
+        implements PaymentSubscriberConnector {
 
     @Autowired
     private OrderService orderService;
 
-    @KafkaListener(topics = "payment-success")
-    public void paymentSuccessMessage(ConsumerRecord<String, String> record) {
-        System.out.println("Received message: " + record.value());
-        ObjectMapper ob = new ObjectMapper();
+    @Override
+    public void paymentSuccess(PaymentSuccessRequest request, StreamObserver<PaymentSuccessResponse> responseObserver) {
         try {
-            PaymentSuccessMessage paymentSuccessMessage = ob.readValue(record.value(), PaymentSuccessMessage.class);
+            PaymentSuccessMessage paymentSuccessMessage = PaymentSuccessMessage.builder()
+                    .sagaId(request.getSagaId())
+                    .build();
             orderService.orderUpdateBasedOnPaymentSuccess(paymentSuccessMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            responseObserver.onNext(PaymentSuccessResponse.newBuilder()
+                    .setStatus(true)
+                    .setMessage("message received successfully")
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception ex) {
+            responseObserver.onNext(PaymentSuccessResponse.newBuilder()
+                    .setStatus(false)
+                    .setMessage("message received failed")
+                    .build());
+            responseObserver.onCompleted();
         }
     }
 
-    @KafkaListener(topics = "payment-fail")
-    public void paymentFailMessage(ConsumerRecord<String, String> record) {
-        System.out.println("Received message: " + record.value());
-        ObjectMapper ob = new ObjectMapper();
+    @Override
+    public void paymentFail(PaymentFailRequest request, StreamObserver<PaymentFailResponse> responseObserver) {
         try {
-            PaymentFailMessage paymentFailMessage = ob.readValue(record.value(), PaymentFailMessage.class);
+            PaymentFailMessage paymentFailMessage = PaymentFailMessage.builder()
+                    .sagaId(request.getSagaId())
+                    .build();
+
             orderService.orderUpdateBasedOnPaymentFail(paymentFailMessage);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            responseObserver.onNext(PaymentFailResponse.newBuilder()
+                    .setStatus(true)
+                    .setMessage("message received successfully")
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception ex) {
+            responseObserver.onNext(PaymentFailResponse.newBuilder()
+                    .setStatus(false)
+                    .setMessage("message received failed")
+                    .build());
+            responseObserver.onCompleted();
         }
     }
 }
